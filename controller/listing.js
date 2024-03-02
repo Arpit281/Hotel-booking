@@ -33,10 +33,11 @@ module.exports.showListing = async (req, res) => {
 };
 
 module.exports.create = async (req, res) => {
-  let result = listingSchema.validate(req.body.listing);
-  console.log(result);
+  let url = req.file.path;
+  let filename = req.file.filename;
   const newListing = new Listing(req.body.listing);
   newListing.owner = req.user._id;
+  newListing.image = { url, filename };
   await newListing.save();
   req.flash("success", "New listing created");
   res.redirect("/listings");
@@ -44,7 +45,15 @@ module.exports.create = async (req, res) => {
 
 module.exports.update = async (req, res) => {
   let { id } = req.params;
-  await Listing.findByIdAndUpdate(id, { ...req.body.listing });
+  let listing = await Listing.findByIdAndUpdate(id, { ...req.body.listing });
+
+  if (typeof req.file !== "undefined") {
+    let url = req.file.path;
+    let filename = req.file.filename;
+    listing.image = { url, filename };
+    await listing.save();
+  }
+
   req.flash("success", "listing updated");
   res.redirect(`/listings/${id}`);
 };
